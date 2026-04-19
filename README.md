@@ -183,9 +183,9 @@ Named constants are provided for all supported characters:
 | `CharGreen` | 66 | _(solid green)_ |
 | `CharBlue` | 67 | _(solid blue)_ |
 | `CharPurple` | 68 | _(solid purple)_ |
-| `CharWhite` | 69 | _(solid white)_ |
-| `CharBlack` | 70 | _(solid black)_ |
-| `CharFilled` | 71 | _(filled)_ |
+| `CharWhite` | 69 | _(solid white)_ there may be problems with this if used with local api|
+| `CharBlack` | 70 | _(solid black)_ there may be problems with this if used with local api|
+| `CharFilled` | 71 | _(filled)_ there may be problems with this if used with local api|
 
 ## Board types
 
