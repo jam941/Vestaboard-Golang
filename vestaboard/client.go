@@ -48,6 +48,23 @@ func (c *Client) SendText(text string, forced bool) (*SendResult, error) {
 	return &result, nil
 }
 
+// SendCharacters sends a raw character-code layout (array of arrays of ints) to the board.
+func (c *Client) SendCharacters(layout BoardLayout, forced bool) (*SendResult, error) {
+	body := map[string]any{"characters": layout}
+	if forced {
+		body["forced"] = true
+	}
+	data, err := c.post(c.baseURL+"/", body)
+	if err != nil {
+		return nil, err
+	}
+	var result SendResult
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *Client) GetMessage() (*MessageResult, error) {
 	data, err := c.get(c.baseURL + "/")
 	if err != nil {

@@ -88,6 +88,47 @@ func TestSendText(t *testing.T) {
 	}
 }
 
+func TestSendCharacters(t *testing.T) {
+	wantLayout := BoardLayout{
+		{CharH, CharI, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload map[string]any
+		json.Unmarshal(body, &payload)
+		if _, ok := payload["characters"]; !ok {
+			t.Errorf("expected 'characters' key in payload")
+		}
+		if _, ok := payload["text"]; ok {
+			t.Errorf("'text' key should not be present for SendCharacters")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"status": "ok", "id": "msg-3", "created": 1681154452865})
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL)
+	result, err := client.SendCharacters(wantLayout, false)
+	if err != nil {
+		t.Fatalf("SendCharacters() error: %v", err)
+	}
+	if result.Status != "ok" {
+		t.Errorf("status: got %q, want 'ok'", result.Status)
+	}
+	if result.ID != "msg-3" {
+		t.Errorf("id: got %q, want 'msg-3'", result.ID)
+	}
+}
+
 func TestSendTextForced(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
