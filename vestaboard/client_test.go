@@ -371,3 +371,16 @@ func TestComposeAndSend(t *testing.T) {
 		t.Errorf("id: got %q, want 'msg-cs'", result.ID)
 	}
 }
+
+func TestNon2xxReturnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("bad-token", srv.URL, srv.URL, BoardFlagship)
+	_, err := client.GetMessage()
+	if err == nil {
+		t.Fatal("expected error for 401 response, got nil")
+	}
+}
