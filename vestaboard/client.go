@@ -14,18 +14,26 @@ type Client struct {
 	token      string
 	baseURL    string
 	vbmlURL    string
+	boardType  BoardType
 	httpClient *http.Client
 }
 
+
 func New(token string) *Client {
-	return newWithURLs(token, defaultBaseURL, defaultVbmlURL)
+	return newWithURLs(token, defaultBaseURL, defaultVbmlURL, BoardFlagship)
 }
 
-func newWithURLs(token, baseURL, vbmlURL string) *Client {
+
+func NewNote(token string) *Client {
+	return newWithURLs(token, defaultBaseURL, defaultVbmlURL, BoardNote)
+}
+
+func newWithURLs(token, baseURL, vbmlURL string, boardType BoardType) *Client {
 	return &Client{
 		token:      token,
 		baseURL:    baseURL,
 		vbmlURL:    vbmlURL,
+		boardType:  boardType,
 		httpClient: &http.Client{},
 	}
 }
@@ -90,6 +98,37 @@ func (c *Client) SetTransition(t Transition, speed TransitionSpeed) (*Transition
 		return nil, err
 	}
 	return &result, nil
+}
+
+// vbml -> board array
+func (c *Client) Compose(req ComposeRequest) (BoardLayout, error) {
+	if req.Style == nil {
+		req.Style = &BoardStyle{}
+	}
+	if req.Style.Height == 0 {
+		req.Style.Height = c.boardType.Rows()
+	}
+	if req.Style.Width == 0 {
+		req.Style.Width = c.boardType.Cols()
+	}
+	data, err := c.post(c.vbmlURL+"/compose", req)
+	if err != nil {
+		return nil, err
+	}
+	var layout BoardLayout
+	if err := json.Unmarshal(data, &layout); err != nil {
+		return nil, err
+	}
+	return layout, nil
+}
+
+// Bundle of compose and send
+func (c *Client) ComposeAndSend(req ComposeRequest, forced bool) (*SendResult, error) {
+	layout, err := c.Compose(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.SendCharacters(layout, forced)
 }
 
 // Nicely formats strings (this is like compose but simpler)

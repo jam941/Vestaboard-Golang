@@ -36,7 +36,7 @@ func TestFormatMessage(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	layout, err := client.FormatMessage("HELLO")
 	if err != nil {
 		t.Fatalf("FormatMessage() error: %v", err)
@@ -62,7 +62,7 @@ func TestGetTransition(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.GetTransition()
 	if err != nil {
 		t.Fatalf("GetTransition() error: %v", err)
@@ -94,7 +94,7 @@ func TestSetTransition(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.SetTransition(TransitionCurtain, SpeedFast)
 	if err != nil {
 		t.Fatalf("SetTransition() error: %v", err)
@@ -136,7 +136,7 @@ func TestGetMessage(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.GetMessage()
 	if err != nil {
 		t.Fatalf("GetMessage() error: %v", err)
@@ -174,7 +174,7 @@ func TestSendText(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.SendText("hello", false)
 	if err != nil {
 		t.Fatalf("SendText() error: %v", err)
@@ -215,7 +215,7 @@ func TestSendCharacters(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.SendCharacters(wantLayout, false)
 	if err != nil {
 		t.Fatalf("SendCharacters() error: %v", err)
@@ -241,12 +241,133 @@ func TestSendTextForced(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newWithURLs("test-token", srv.URL, srv.URL)
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
 	result, err := client.SendText("urgent", true)
 	if err != nil {
 		t.Fatalf("SendText(forced) error: %v", err)
 	}
 	if result.ID != "msg-2" {
 		t.Errorf("id: got %q, want 'msg-2'", result.ID)
+	}
+}
+
+func TestComposeFlagship(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		if r.URL.Path != "/compose" {
+			t.Errorf("expected path /compose, got %s", r.URL.Path)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload map[string]any
+		json.Unmarshal(body, &payload)
+		style := payload["style"].(map[string]any)
+		if style["height"].(float64) != 6 {
+			t.Errorf("flagship height: got %v, want 6", style["height"])
+		}
+		if style["width"].(float64) != 22 {
+			t.Errorf("flagship width: got %v, want 22", style["width"])
+		}
+		// return a minimal 6×22 layout
+		layout := make(BoardLayout, 6)
+		for i := range layout {
+			layout[i] = make([]int, 22)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(layout)
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
+	layout, err := client.Compose(ComposeRequest{
+		Components: []Component{{Template: "HELLO", Style: &ComponentStyle{Justify: "center", Align: "center"}}},
+	})
+	if err != nil {
+		t.Fatalf("Compose() error: %v", err)
+	}
+	if len(layout) != 6 || len(layout[0]) != 22 {
+		t.Errorf("expected 6×22 layout, got %d×%d", len(layout), len(layout[0]))
+	}
+}
+
+func TestComposeNote(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var payload map[string]any
+		json.Unmarshal(body, &payload)
+		style := payload["style"].(map[string]any)
+		if style["height"].(float64) != 3 {
+			t.Errorf("note height: got %v, want 3", style["height"])
+		}
+		if style["width"].(float64) != 15 {
+			t.Errorf("note width: got %v, want 15", style["width"])
+		}
+		layout := make(BoardLayout, 3)
+		for i := range layout {
+			layout[i] = make([]int, 15)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(layout)
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardNote)
+	layout, err := client.Compose(ComposeRequest{
+		Components: []Component{{Template: "HI"}},
+	})
+	if err != nil {
+		t.Fatalf("Compose() Note error: %v", err)
+	}
+	if len(layout) != 3 || len(layout[0]) != 15 {
+		t.Errorf("expected 3×15 layout, got %d×%d", len(layout), len(layout[0]))
+	}
+}
+
+func TestComposeAndSend(t *testing.T) {
+	composeLayout := BoardLayout{}
+	for i := 0; i < 6; i++ {
+		row := make([]int, 22)
+		row[0] = CharH
+		composeLayout = append(composeLayout, row)
+	}
+
+	var composeCalled, sendCalled bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/compose":
+			composeCalled = true
+			json.NewEncoder(w).Encode(composeLayout)
+		case "/":
+			sendCalled = true
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]any
+			json.Unmarshal(body, &payload)
+			if _, ok := payload["characters"]; !ok {
+				t.Errorf("expected 'characters' key in send payload")
+			}
+			json.NewEncoder(w).Encode(map[string]any{"status": "ok", "id": "msg-cs", "created": 1681154452865})
+		default:
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL, BoardFlagship)
+	result, err := client.ComposeAndSend(ComposeRequest{
+		Components: []Component{{Template: "HELLO"}},
+	}, false)
+	if err != nil {
+		t.Fatalf("ComposeAndSend() error: %v", err)
+	}
+	if !composeCalled {
+		t.Error("compose endpoint was not called")
+	}
+	if !sendCalled {
+		t.Error("send endpoint was not called")
+	}
+	if result.ID != "msg-cs" {
+		t.Errorf("id: got %q, want 'msg-cs'", result.ID)
 	}
 }
