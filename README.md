@@ -147,36 +147,45 @@ Named constants are provided for all supported characters:
 | `CharX` | 24 | X |
 | `CharY` | 25 | Y |
 | `CharZ` | 26 | Z |
-| `CharExclamation` | 27 | ! |
-| `CharAt` | 28 | @ |
-| `CharHash` | 29 | # |
-| `CharDollar` | 30 | $ |
-| `CharLeftParen` | 31 | ( |
-| `CharRightParen` | 32 | ) |
-| `CharHyphen` | 33 | - |
-| `CharPlus` | 34 | + |
-| `CharAnd` | 35 | & |
+| `Char1` | 27 | 1 |
+| `Char2` | 28 | 2 |
+| `Char3` | 29 | 3 |
+| `Char4` | 30 | 4 |
+| `Char5` | 31 | 5 |
+| `Char6` | 32 | 6 |
+| `Char7` | 33 | 7 |
+| `Char8` | 34 | 8 |
+| `Char9` | 35 | 9 |
 | `Char0` | 36 | 0 |
-| `Char1` | 37 | 1 |
-| `Char2` | 38 | 2 |
-| `Char3` | 39 | 3 |
-| `Char4` | 40 | 4 |
-| `Char5` | 41 | 5 |
-| `Char6` | 42 | 6 |
-| `Char7` | 43 | 7 |
-| `Char8` | 44 | 8 |
-| `Char9` | 45 | 9 |
-| `CharEquals` | 46 | = |
-| `CharSemicolon` | 47 | ; |
-| `CharColon` | 48 | : |
-| `CharApostrophe` | 49 | ' |
-| `CharQuote` | 50 | " |
-| `CharPercent` | 51 | % |
-| `CharComma` | 52 | , |
-| `CharPeriod` | 53 | . |
-| `CharSlash` | 54 | / |
-| `CharQuestion` | 55 | ? |
-| `CharDegree` | 62 | ° |
+| `CharExclamation` | 37 | ! |
+| `CharAt` | 38 | @ |
+| `CharHash` | 39 | # |
+| `CharDollar` | 40 | $ |
+| `CharLeftParen` | 41 | ( |
+| `CharRightParen` | 42 | ) |
+| `CharHyphen` | 44 | - |
+| `CharPlus` | 46 | + |
+| `CharAnd` | 47 | & |
+| `CharEquals` | 48 | = |
+| `CharSemicolon` | 49 | ; |
+| `CharColon` | 50 | : |
+| `CharApostrophe` | 52 | ' |
+| `CharQuote` | 53 | " |
+| `CharPercent` | 54 | % |
+| `CharComma` | 55 | , |
+| `CharPeriod` | 56 | . |
+| `CharSlash` | 59 | / |
+| `CharQuestion` | 60 | ? |
+| `CharHeart` | 62 | ♥ |
+| `CharRed` | 63 | _(solid red)_ |
+| `CharOrange` | 64 | _(solid orange)_ |
+| `CharYellow` | 65 | _(solid yellow)_ |
+| `CharGreen` | 66 | _(solid green)_ |
+| `CharBlue` | 67 | _(solid blue)_ |
+| `CharPurple` | 68 | _(solid purple)_ |
+| `CharWhite` | 69 | _(solid white)_ |
+| `CharBlack` | 70 | _(solid black)_ |
+| `CharFilled` | 71 | _(filled)_ |
 
 ## Board types
 
