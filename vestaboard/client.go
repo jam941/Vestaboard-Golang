@@ -31,6 +31,23 @@ func newWithURLs(token, baseURL, vbmlURL string) *Client {
 }
 
 
+// SendText does not utilize styling of any sort
+func (c *Client) SendText(text string, forced bool) (*SendResult, error) {
+	body := map[string]any{"text": text}
+	if forced {
+		body["forced"] = true
+	}
+	data, err := c.post(c.baseURL+"/", body)
+	if err != nil {
+		return nil, err
+	}
+	var result SendResult
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *Client) GetMessage() (*MessageResult, error) {
 	data, err := c.get(c.baseURL + "/")
 	if err != nil {
