@@ -8,6 +8,105 @@ import (
 	"testing"
 )
 
+func TestFormatMessage(t *testing.T) {
+	wantLayout := BoardLayout{
+		{CharH, CharE, CharL, CharL, CharO, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		if r.URL.Path != "/format" {
+			t.Errorf("expected path /format, got %s", r.URL.Path)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload map[string]any
+		json.Unmarshal(body, &payload)
+		if payload["message"] != "HELLO" {
+			t.Errorf("expected message 'HELLO', got %v", payload["message"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(wantLayout)
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL)
+	layout, err := client.FormatMessage("HELLO")
+	if err != nil {
+		t.Fatalf("FormatMessage() error: %v", err)
+	}
+	if len(layout) != len(wantLayout) {
+		t.Fatalf("layout rows: got %d, want %d", len(layout), len(wantLayout))
+	}
+	if layout[0][0] != CharH || layout[0][4] != CharO {
+		t.Errorf("layout[0]: got %v, want %v", layout[0], wantLayout[0])
+	}
+}
+
+func TestGetTransition(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+		}
+		if r.URL.Path != "/transition" {
+			t.Errorf("expected path /transition, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"transition": "wave", "transitionSpeed": "gentle"})
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL)
+	result, err := client.GetTransition()
+	if err != nil {
+		t.Fatalf("GetTransition() error: %v", err)
+	}
+	if result.Transition != TransitionWave {
+		t.Errorf("transition: got %q, want %q", result.Transition, TransitionWave)
+	}
+	if result.TransitionSpeed != SpeedGentle {
+		t.Errorf("speed: got %q, want %q", result.TransitionSpeed, SpeedGentle)
+	}
+}
+
+func TestSetTransition(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload map[string]any
+		json.Unmarshal(body, &payload)
+		if payload["transition"] != "curtain" {
+			t.Errorf("transition: got %v, want 'curtain'", payload["transition"])
+		}
+		if payload["transitionSpeed"] != "fast" {
+			t.Errorf("transitionSpeed: got %v, want 'fast'", payload["transitionSpeed"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"transition": "curtain", "transitionSpeed": "fast"})
+	}))
+	defer srv.Close()
+
+	client := newWithURLs("test-token", srv.URL, srv.URL)
+	result, err := client.SetTransition(TransitionCurtain, SpeedFast)
+	if err != nil {
+		t.Fatalf("SetTransition() error: %v", err)
+	}
+	if result.Transition != TransitionCurtain {
+		t.Errorf("transition: got %q, want %q", result.Transition, TransitionCurtain)
+	}
+	if result.TransitionSpeed != SpeedFast {
+		t.Errorf("speed: got %q, want %q", result.TransitionSpeed, SpeedFast)
+	}
+}
+
 func TestGetMessage(t *testing.T) {
 	wantID := "abc-123"
 	wantLayout := BoardLayout{

@@ -65,6 +65,46 @@ func (c *Client) SendCharacters(layout BoardLayout, forced bool) (*SendResult, e
 	return &result, nil
 }
 
+
+func (c *Client) GetTransition() (*TransitionInfo, error) {
+	data, err := c.get(c.baseURL + "/transition")
+	if err != nil {
+		return nil, err
+	}
+	var result TransitionInfo
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// updates the transition animation and speed.
+func (c *Client) SetTransition(t Transition, speed TransitionSpeed) (*TransitionInfo, error) {
+	body := map[string]any{"transition": t, "transitionSpeed": speed}
+	data, err := c.put(c.baseURL+"/transition", body)
+	if err != nil {
+		return nil, err
+	}
+	var result TransitionInfo
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// Nicely formats strings (this is like compose but simpler)
+func (c *Client) FormatMessage(text string) (BoardLayout, error) {
+	data, err := c.post(c.vbmlURL+"/format", map[string]any{"message": text})
+	if err != nil {
+		return nil, err
+	}
+	var layout BoardLayout
+	if err := json.Unmarshal(data, &layout); err != nil {
+		return nil, err
+	}
+	return layout, nil
+}
+
 func (c *Client) GetMessage() (*MessageResult, error) {
 	data, err := c.get(c.baseURL + "/")
 	if err != nil {
